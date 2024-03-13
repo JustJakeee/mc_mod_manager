@@ -4,7 +4,7 @@ use std::path::Path;
 use std::fs;
 use anyhow::Result;
 
-pub async fn downlawaitoad_mods(config: Config) -> Result<()> {
+pub async fn download_mods(config: Config) -> Result<()> {
     let mods_path = Path::new(&config.mods_path);
     match clear_directory(mods_path) {
         Ok(()) => println!("Directory cleared successfully"),
