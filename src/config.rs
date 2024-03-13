@@ -1,5 +1,4 @@
 use std::fs::read_to_string;
-use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::from_str;
 
@@ -10,7 +9,20 @@ pub struct Config {
     pub mods_path: String,
 }
 
-pub fn get_config() -> Result<Config> {
-    let config_str = read_to_string("config.json")?;
-    Ok(from_str(&config_str)?)
+pub fn get_config() -> Option<Config> {
+    let config_str = match read_to_string("config.json") {
+        Ok(s) => s,
+        Err(err) => {
+            eprintln!("Couldn't read config file: {}", err);
+            return None;
+        }
+    };
+
+    match from_str(&config_str) {
+        Ok(config) => Some(config),
+        Err(err) => {
+            eprintln!("Couldn't parse config file: {}", err);
+            None
+        }
+    }
 }

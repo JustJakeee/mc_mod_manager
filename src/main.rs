@@ -9,12 +9,20 @@ use std::fs;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let config = get_config()?;
+    let config = match get_config() {
+        Some(config) => {
+            println!("Config Found!");
+            config
+        }
+        None => {
+            panic!("Couldn't find config!!!");
+        }
+    };
     let mods_path = Path::new(&config.mods_path);
     match clear_directory(mods_path) {
         Ok(()) => println!("Directory cleared successfully"),
         Err(err) => {
-            eprintln!("Error clearing directory: {}", err);
+            eprintln!("Error clearing directory: {err}");
             // Additional error handling or logging
         }
     }
