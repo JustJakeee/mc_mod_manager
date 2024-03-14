@@ -1,8 +1,10 @@
 use crate::api::*;
 use crate::config::*;
-use std::path::Path;
-use std::fs;
 use anyhow::Result;
+use std::fs;
+use std::io;
+use std::io::Write;
+use std::path::Path;
 
 pub async fn download_mods(config: Config) -> Result<()> {
     let mods_path = Path::new(&config.mods_path);
@@ -57,7 +59,7 @@ fn clear_directory(dir_path: &Path) -> Result<()> {
 }
 
 pub fn add_mod_to_config(config: &mut Config, mod_slug: &String) {
-    config.mod_slugs.push( mod_slug.clone() );
+    config.mod_slugs.push(mod_slug.clone());
     match save_config(config) {
         Ok(_) => {
             println!("Mod \"{mod_slug}\" successfully added to config!")
@@ -66,4 +68,106 @@ pub fn add_mod_to_config(config: &mut Config, mod_slug: &String) {
             println!("Error saving mod: {err}")
         }
     }
+}
+
+pub fn remove_mod_from_config(config: &mut Config, mod_slug: &String) {
+    let mut removed = false;
+    config.mod_slugs.retain(|slug| {
+        if slug != mod_slug {
+            true
+        } else {
+            removed = true;
+            false
+        }
+    });
+
+    match save_config(config) {
+        Ok(_) => {
+            if removed {
+                println!("Mod \"{mod_slug}\" successfully removed from config!")
+            } else {
+                println!("Mod \"{mod_slug}\" not found in config.")
+            }
+        }
+        Err(err) => {
+            println!("Error saving config: {err}")
+        }
+    }
+}
+
+pub fn list_mods_in_config(config: &Config) {
+    if config.mod_slugs.is_empty() {
+        println!("No mods in the config.");
+    } else {
+        println!("-- Mods in the config --");
+        for (index, mod_slug) in config.mod_slugs.iter().enumerate() {
+            println!("{} - {}", index + 1, mod_slug);
+        }
+    }
+}
+
+pub async fn search_and_add_mods(config: &mut Config, query: &String, limit: &i8) -> Result<()> {
+    println!("Getting projects matching {query}");
+    let search = search_projects(&query, &config.version, &limit).await?;
+    println!("{:#?}", search);
+    let hits = search.hits;
+    let desired_mod;
+    loop {
+        println!();
+        io::stdout().flush().unwrap();
+        println!("-- Search results for \"{query}\" -- ({})", hits.len());
+        for (index, item) in hits.iter().enumerate() {
+            println!("({index}): {}", item.title)
+        }
+        print!("Enter your choice: ");
+        io::stdout().flush().unwrap();
+        let mut choice = String::new();
+        io::stdin()
+            .read_line(&mut choice)
+            .expect("Failed to read line");
+
+        let choice: usize = match choice.trim().parse() {
+            Ok(num) => num,
+            Err(_) => continue,
+        };
+
+        if choice < hits.len() {
+            desired_mod = &hits[choice];
+            println!("You chose: {}", &desired_mod.title);
+            break;
+        } else {
+            println!("Invalid choice");
+            continue;
+        }
+    }
+    println!();
+    println!("-- {} -- ", &desired_mod.title);
+    println!("{}", &desired_mod.description);
+    println!();
+    println!("Add this mod to config?");
+    print!("(y/n): ");
+    io::stdout().flush().unwrap();
+    let mut choice = String::new();
+
+    io::stdin()
+        .read_line(&mut choice)
+        .expect("Failed to read line");
+
+    let choice: bool = match choice
+        .chars()
+        .next()
+        .unwrap()
+        .to_lowercase()
+        .next()
+        .unwrap()
+    {
+        'y' => true,
+        _ => false,
+    };
+
+    if choice {
+        add_mod_to_config(config, &desired_mod.slug);
+    }
+
+    Ok(())
 }
