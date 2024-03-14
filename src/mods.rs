@@ -55,3 +55,15 @@ fn clear_directory(dir_path: &Path) -> Result<()> {
     }
     Ok(())
 }
+
+pub fn add_mod_to_config(config: &mut Config, mod_slug: &String) {
+    config.mod_slugs.push( mod_slug.clone() );
+    match save_config(config) {
+        Ok(_) => {
+            println!("Mod \"{mod_slug}\" successfully added to config!")
+        }
+        Err(err) => {
+            println!("Error saving mod: {err}")
+        }
+    }
+}

@@ -7,6 +7,13 @@ use std::io::Write;
 pub type VersionsResponse = Vec<Version>;
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct SearchResponse {
+    pub hits: Vec<Project>,
+    pub limit: i8,
+    pub total_hits: i8,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Version {
     pub name: String,
     pub version_number: String,
@@ -25,12 +32,13 @@ pub struct ModFile {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ProjectResponse {
+pub struct Project {
     pub title: String,
+    pub slug: String,
     pub description: String,
 }
 
-async fn download_file(url: &str, file_path: &str) -> Result<()> {
+async fn download_file(url: &String, file_path: &String) -> Result<()> {
     let client = Client::new();
     let response = client.get(url).send().await?.bytes().await?;
 
@@ -52,11 +60,8 @@ pub async fn download_mod(version: &Version, path: &String) {
             let file_path = format!("{}{}", path, file.filename);
             println!("Downloading to: {}", file_path);
             match download_file(&file.url, &file_path).await {
-                Ok(_) => {
-                    println!("Downloaded!")
-                } Err(e) => {
-                    println!("Error downloading file: {}", e)
-                }
+                Ok(_) => println!("Downloaded!"),
+                Err(e) => println!("Error downloading file: {}", e),
             };
         }
         None => {
@@ -76,13 +81,24 @@ pub async fn get_versions(mod_slug: &String) -> Result<VersionsResponse> {
         .await?)
 }
 
-pub async fn get_project(mod_slug: &String) -> Result<ProjectResponse> {
+pub async fn get_project(mod_slug: &String) -> Result<Project> {
     let client = Client::new();
     let url = format!("https://api.modrinth.com/v2/project/{mod_slug}");
     Ok(client
         .get(url)
         .send()
         .await?
-        .json::<ProjectResponse>()
+        .json::<Project>()
+        .await?)
+}
+
+pub async fn search_projects(query: &String, version: &String, limit: &i8) -> Result<SearchResponse> {
+    let client = Client::new();
+    let url = format!("https://api.modrinth.com/v2/search?query=\"{query}\"&facets=[[\"versions:{version}\"], [\"project_type:mod\"]]&limit={limit}");
+    Ok(client
+        .get(url)
+        .send()
+        .await?
+        .json::<SearchResponse>()
         .await?)
 }

@@ -1,6 +1,7 @@
-use std::fs::read_to_string;
+use std::{fs::{read_to_string, File}, io::Write};
 use serde::{Deserialize, Serialize};
 use serde_json::from_str;
+use anyhow::Result;
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
@@ -25,4 +26,13 @@ pub fn get_config() -> Option<Config> {
             None
         }
     }
+}
+
+pub fn save_config(config: &mut Config) -> Result<()> {
+    let json_data = serde_json::to_string_pretty(&config)?;
+
+    let mut file = File::create("config.json")?;
+    file.write_all(json_data.as_bytes())?;
+
+    Ok(())
 }
