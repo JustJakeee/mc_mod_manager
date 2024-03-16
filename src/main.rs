@@ -33,7 +33,9 @@ async fn main() -> Result<()> {
         Commands::Add { mod_slug } => add_mod_to_config(&mut config, &mod_slug),
         Commands::Remove { mod_slug } => remove_mod_from_config(&mut config, &mod_slug),
         Commands::List => list_mods_in_config(&config),
-        Commands::Search { query, limit } => search_and_add_mods(&mut config, &query, &limit).await.unwrap(),
+        Commands::Search { query, limit } => search_and_add_mods(&mut config, &query, &limit)
+            .await
+            .unwrap(),
     }
     Ok(())
 }

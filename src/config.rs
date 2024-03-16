@@ -1,7 +1,10 @@
-use std::{fs::{read_to_string, File}, io::Write};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::from_str;
-use anyhow::Result;
+use std::{
+    fs::{read_to_string, File},
+    io::Write,
+};
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {

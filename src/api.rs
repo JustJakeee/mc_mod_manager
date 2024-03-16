@@ -84,15 +84,14 @@ pub async fn get_versions(mod_slug: &String) -> Result<VersionsResponse> {
 pub async fn get_project(mod_slug: &String) -> Result<Project> {
     let client = Client::new();
     let url = format!("https://api.modrinth.com/v2/project/{mod_slug}");
-    Ok(client
-        .get(url)
-        .send()
-        .await?
-        .json::<Project>()
-        .await?)
+    Ok(client.get(url).send().await?.json::<Project>().await?)
 }
 
-pub async fn search_projects(query: &String, version: &String, limit: &i8) -> Result<SearchResponse> {
+pub async fn search_projects(
+    query: &String,
+    version: &String,
+    limit: &i8,
+) -> Result<SearchResponse> {
     let client = Client::new();
     let url = format!("https://api.modrinth.com/v2/search?query=\"{query}\"&facets=[[\"versions:{version}\"], [\"project_type:mod\"]]&limit={limit}");
     Ok(client
